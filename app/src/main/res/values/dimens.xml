@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="buttonHeight">64dp</dimen>   <!-- Altura del botón -->
+    <dimen name="buttonWidth">64dp</dimen>    <!-- Ancho del botón -->
+    <dimen name="buttonPadding">8dp</dimen>   <!-- Espaciado entre botones -->
+    <dimen name="buttonTextSize">24sp</dimen> <!-- Tamaño del texto en los botones -->
+</resources>

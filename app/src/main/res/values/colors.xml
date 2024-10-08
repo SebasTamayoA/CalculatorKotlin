@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="buttonBackground">#00810A</color> <!-- Color de fondo de los botones -->
+    <color name="buttonText">#FFFFFFFF</color>        <!-- Color del texto de los botones -->
+</resources>
