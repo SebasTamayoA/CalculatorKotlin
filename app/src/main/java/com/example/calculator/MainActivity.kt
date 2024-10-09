@@ -16,6 +16,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.colorResource
 import com.example.calculator.ui.theme.CalculatorTheme
 import androidx.compose.ui.text.style.TextAlign
+import net.objecthunter.exp4j.ExpressionBuilder
+import kotlin.toString
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,9 +38,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun CalculatorLayout() {
     var displayText by remember { mutableStateOf("0") }
-    var operand1 by remember { mutableStateOf("") }
-    var operand2 by remember { mutableStateOf("") }
-    var operator by remember { mutableStateOf("") }
+    var expression by remember { mutableStateOf("") }
+    var lastNumber by remember { mutableStateOf("") }
+    var resetDisplay by remember { mutableStateOf(false) } // Controla si se debe resetear el display
 
     Column(
         modifier = Modifier
@@ -48,6 +50,14 @@ fun CalculatorLayout() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
+            text = expression,
+            fontSize = 24.sp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            textAlign = TextAlign.End
+        )
+        Text(
             text = displayText,
             fontSize = 32.sp,
             modifier = Modifier
@@ -56,80 +66,118 @@ fun CalculatorLayout() {
             textAlign = TextAlign.End
         )
 
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.buttonPadding)))
-        Row(modifier = Modifier.padding(dimensionResource(id = R.dimen.buttonPadding))) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.padding(16.dp)) {
             CalculatorButton(text = "AC") {
                 displayText = "0"
-                operand1 = ""
-                operand2 = ""
-                operator = ""
+                expression = ""
+                lastNumber = ""
+                resetDisplay = false
             }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
+            Spacer(modifier = Modifier.width(16.dp))
             CalculatorButton(text = "C") {
                 displayText = displayText.dropLast(1).ifEmpty { "0" }
+                expression = expression.dropLast(1)
+                lastNumber = lastNumber.dropLast(1)
+                resetDisplay = false
             }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
+            Spacer(modifier = Modifier.width(16.dp))
             CalculatorButton(text = "%") {
-                displayText = (displayText.toDouble() / 100).toString()
+                if (expression.isNotEmpty() && !isOperator(expression.last())) {
+                    expression += "%"
+                    resetDisplay = true
+                }
             }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
+            Spacer(modifier = Modifier.width(16.dp))
             CalculatorButton(text = "/") {
-                operator = "/"
-                operand1 = displayText
-                displayText = "0"
+                if (expression.isNotEmpty() && !isOperator(expression.last())) {
+                    expression += "/"
+                    resetDisplay = true
+                }
             }
         }
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.buttonPadding)))
-        Row(modifier = Modifier.padding(dimensionResource(id = R.dimen.buttonPadding))) {
-            CalculatorButton(text = "7") { appendNumber("7", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
-            CalculatorButton(text = "8") { appendNumber("8", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
-            CalculatorButton(text = "9") { appendNumber("9", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.padding(16.dp)) {
+            CalculatorButton(text = "7") {
+                resetDisplay = appendNumber("7", displayText, resetDisplay) { displayText = it; expression += "7"; lastNumber += "7" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            CalculatorButton(text = "8") {
+                resetDisplay = appendNumber("8", displayText, resetDisplay) { displayText = it; expression += "8"; lastNumber += "8" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            CalculatorButton(text = "9") {
+                resetDisplay = appendNumber("9", displayText, resetDisplay) { displayText = it; expression += "9"; lastNumber += "9" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             CalculatorButton(text = "*") {
-                operator = "*"
-                operand1 = displayText
-                displayText = "0"
+                if (expression.isNotEmpty() && !isOperator(expression.last())) {
+                    expression += "*"
+                    resetDisplay = true
+                }
             }
         }
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.buttonPadding)))
-        Row(modifier = Modifier.padding(dimensionResource(id = R.dimen.buttonPadding))) {
-            CalculatorButton(text = "4") { appendNumber("4", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
-            CalculatorButton(text = "5") { appendNumber("5", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
-            CalculatorButton(text = "6") { appendNumber("6", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.padding(16.dp)) {
+            CalculatorButton(text = "4") {
+                resetDisplay = appendNumber("4", displayText, resetDisplay) { displayText = it; expression += "4"; lastNumber += "4" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            CalculatorButton(text = "5") {
+                resetDisplay = appendNumber("5", displayText, resetDisplay) { displayText = it; expression += "5"; lastNumber += "5" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            CalculatorButton(text = "6") {
+                resetDisplay = appendNumber("6", displayText, resetDisplay) { displayText = it; expression += "6"; lastNumber += "6" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             CalculatorButton(text = "-") {
-                operator = "-"
-                operand1 = displayText
-                displayText = "0"
+                if (expression.isNotEmpty() && !isOperator(expression.last())) {
+                    expression += "-"
+                    resetDisplay = true
+                }
             }
         }
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.buttonPadding)))
-        Row(modifier = Modifier.padding(dimensionResource(id = R.dimen.buttonPadding))) {
-            CalculatorButton(text = "1") { appendNumber("1", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
-            CalculatorButton(text = "2") { appendNumber("2", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
-            CalculatorButton(text = "3") { appendNumber("3", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.padding(16.dp)) {
+            CalculatorButton(text = "1") {
+                resetDisplay = appendNumber("1", displayText, resetDisplay) { displayText = it; expression += "1"; lastNumber += "1" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            CalculatorButton(text = "2") {
+                resetDisplay = appendNumber("2", displayText, resetDisplay) { displayText = it; expression += "2"; lastNumber += "2" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            CalculatorButton(text = "3") {
+                resetDisplay = appendNumber("3", displayText, resetDisplay) { displayText = it; expression += "3"; lastNumber += "3" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             CalculatorButton(text = "+") {
-                operator = "+"
-                operand1 = displayText
-                displayText = "0"
+                if (expression.isNotEmpty() && !isOperator(expression.last())) {
+                    expression += "+"
+                    resetDisplay = true
+                }
             }
         }
-        Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.buttonPadding)))
-        Row(modifier = Modifier.padding(dimensionResource(id = R.dimen.buttonPadding))) {
-            CalculatorButton(text = "0") { appendNumber("0", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
-            CalculatorButton(text = ".") { appendNumber(".", displayText) { displayText = it } }
-            Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.buttonPadding)))
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(modifier = Modifier.padding(16.dp)) {
+            CalculatorButton(text = "0") {
+                resetDisplay = appendNumber("0", displayText, resetDisplay) { displayText = it; expression += "0"; lastNumber += "0" }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            CalculatorButton(text = ".") {
+                resetDisplay = appendNumber(".", displayText, resetDisplay) { displayText = it; expression += "."; lastNumber += "." }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
             CalculatorButton(text = "=") {
-                operand2 = displayText
-                displayText = calculateResult(operand1, operand2, operator)
+                displayText = calculateResult(expression)
+                expression = displayText
+                lastNumber = displayText
+                resetDisplay = true
             }
         }
     }
@@ -157,26 +205,29 @@ fun CalculatorButton(text: String, onClick: () -> Unit) {
     }
 }
 
-fun appendNumber(number: String, currentDisplay: String, updateDisplay: (String) -> Unit) {
-    if (currentDisplay == "0") {
+fun appendNumber(number: String, currentDisplay: String, resetDisplay: Boolean, updateDisplay: (String) -> Unit): Boolean {
+    if (currentDisplay == "0" || resetDisplay) {
         updateDisplay(number)
+        return false
     } else {
         updateDisplay(currentDisplay + number)
+        return resetDisplay
     }
 }
 
-fun calculateResult(operand1: String, operand2: String, operator: String): String {
+
+fun isOperator(char: Char): Boolean {
+    return char == '+' || char == '-' || char == '*' || char == '/' || char == '%'
+}
+
+fun calculateResult(expression: String): String {
     return try {
-        val op1 = operand1.toDouble()
-        val op2 = operand2.toDouble()
-        when (operator) {
-            "+" -> (op1 + op2).toString()
-            "-" -> (op1 - op2).toString()
-            "*" -> (op1 * op2).toString()
-            "/" -> (op1 / op2).toString()
-            "%" -> (op1 / 100).toString()
-            else -> "Error"
+        // Reemplaza los porcentajes con su valor decimal
+        val modifiedExpression = expression.replace(Regex("(\\d+)%")) {
+            (it.groupValues[1].toDouble() / 100).toString()
         }
+        val result = ExpressionBuilder(modifiedExpression).build().evaluate()
+        result.toString()
     } catch (e: Exception) {
         "Error"
     }
